@@ -156,7 +156,6 @@ Node.prototype.populateVisual = function() {
 		center: new paper.Point(this.position.x, this.position.y),
 		radius: 15,
 		strokeColor: 'black',
-		strokeScaling: false,
 		fillColor: 'black'
 	});
 
@@ -179,6 +178,10 @@ Node.prototype.populateVisual = function() {
 	this.visual.addChild(this.redAura);
 	this.visual.addChild(this.core);
 
+}
+
+Node.prototype.teardownVisual = function() {
+	this.visual.remove();
 }
 
 Node.prototype.redAuraVisible = function() {
@@ -231,7 +234,7 @@ Node.prototype.routeExistsTo = function(dest) {
 
 	if (this.rrqProgress.active) {
 		since = getSimTime() - this.rrqProgress.timestamp;
-		if (this.rrqProgress.resolved || (since >= 10000)) {
+		if (this.rrqProgress.resolved || (since >= 20)) {
 			this.rrqProgress.active = false;
 		}
 	}
@@ -513,6 +516,8 @@ Node.prototype.handleReceived = function () {
 // -------------------------------------------------------------
 
 
+var runningNodeId = 0;
+
 function Simulation(real_width, real_height) {
 
 	this.coords = new CoordinateSystem(real_width, real_height);
@@ -529,18 +534,18 @@ function Simulation(real_width, real_height) {
 
 	this.nodes = [];
 
-	var i, j;
-	var k = 1;
-	for (i = -2000; i <= 2000; i += 200) {
-		for (j = -1000; j <= 1000; j += 100) {
+	// var i, j;
+	// var k = 1;
+	// for (i = -2000; i <= 2000; i += 200) {
+	// 	for (j = -1000; j <= 1000; j += 200) {
 
-			if (Math.random() < 0.8) {
-				this.nodes.push(new Node(this.nodeGroup, {x: i, y: j}, k));
-				k += 1;
-			}
+	// 		if (Math.random() < 0.65) {
+	// 			this.nodes.push(new Node(this.nodeGroup, {x: i, y: j}, k));
+	// 			k += 1;
+	// 		}
 			
-		}
-	}
+	// 	}
+	// }
 
 	var self = this;
 	paper.view.onFrame = function (event) {
@@ -551,9 +556,57 @@ function Simulation(real_width, real_height) {
 		self.eventTimer();
 	}, 250);
 
-	A = this.nodes[0];
-	B = this.nodes[this.nodes.length - 1];
+	this.tool = new paper.Tool();
 
+	this.send1 = null;
+	this.send2 = null;
+
+	this.tool.onMouseDown = function(event) {
+		var p = self.coords.inverseTransform(event.downPoint);
+		var b = event.event.button;
+		self.clickHandler(p, b);
+	}
+
+	// A = this.nodes[0];
+	// B = this.nodes[this.nodes.length - 1];
+
+}
+
+Simulation.prototype.clickHandler = function(p, b) {
+	
+	var hit = 0;
+
+	if (b == 0) {
+		this.nodes.push(new Node(this.nodeGroup, {x: p.x, y: p.y}, runningNodeId));
+		runningNodeId += 1;
+	} else if (b == 1) {
+		hit = this.nodeHitTest(p);
+		if (hit > -1) {
+			this.nodes[hit].teardownVisual();
+			this.nodes.splice(hit, 1);
+		}
+	} else if (b == 2) {
+		hit = this.nodeHitTest(p);
+		console.log(this.nodes[hit]);
+		if (this.send1 == null) {
+			this.send1 = this.nodes[hit];
+		} else if (this.send2 == null) {
+			this.send2 = this.nodes[hit];
+			this.send1.queuePacket(new Packet("Hey", this.send1.nodeId, this.send2.nodeId, "PACKET_TYPE_CONTENT"));
+			this.send1 = null;
+			this.send2 = null;
+		}
+	}
+}
+
+Simulation.prototype.nodeHitTest = function(p) {
+	var i = 0;
+	for (i = 0; i < this.nodes.length; i ++) {
+		if (this.nodes[i].core.contains(p)) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 Simulation.prototype.eventTimer = function() {
@@ -622,6 +675,8 @@ Simulation.prototype.handleFrameSendGraphics = function(source, dest, frame) {
 			source.showRedAura();
 		} else if (frame.content.type == "PACKET_TYPE_RUP") {
 			source.showBlueAura();
+		} else if (frame.content.type == "PACKET_TYPE_CONTENT") {
+			
 		}
 	}
 

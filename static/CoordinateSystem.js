@@ -88,8 +88,7 @@ CoordinateSystem.prototype._applyCoordinateChanges = function () {
 }
 
 CoordinateSystem.prototype.inverseTransform = function(point) {
-	var inv = this.matrix.inverted();
-	return inv.transform(point);
+	return this.matrix.inverseTransform(point)
 }
 
 

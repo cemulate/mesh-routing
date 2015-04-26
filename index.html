@@ -43,6 +43,8 @@
 
 		$(document).ready(function () {
 
+			$('body').on('contextmenu', '#paperContainer', function(e){ return false; });
+
 			var w = $("#paperContainer").width();
 			var h = $(window).innerHeight() - $("#header").height() - 10;
 
