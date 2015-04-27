@@ -102,21 +102,21 @@ CoordinateSystem.prototype.drawCoordinatePlane = function(container, options) {
 	var height = this.maxy - this.miny;
 
 	var xline = new paper.Path.Line(new paper.Point(this.minx, 0), new paper.Point(this.maxx, 0));
-	xline.strokeWidth = 2.5;
+	xline.strokeWidth = 1;
 	xline.opacity = 0.6;
-	xline.strokeColor = "black";
+	xline.strokeColor = "#555";
 	xline.strokeScaling = false;
 
 	var yline = new paper.Path.Line(new paper.Point(0, this.miny), new paper.Point(0, this.maxy));
-	yline.strokeWidth = 2.5;
+	yline.strokeWidth = 1;
 	yline.opacity = 0.6;
-	yline.strokeColor = "black";
+	yline.strokeColor = "#555";
 	yline.strokeScaling = false;
 
 	var doBorder = ('border' in options) ? options.border : false;
 	if (doBorder) {
 		var border = new paper.Path.Rectangle(new paper.Point(this.minx, this.miny), new paper.Size(width, height));
-		border.strokeColor = "black";
+		border.strokeColor = "#555";
 		border.opacity = 0.5;
 		border.strokeWidth = 10.0;
 	}
@@ -131,9 +131,9 @@ CoordinateSystem.prototype.drawCoordinatePlane = function(container, options) {
 	var x = 0;
 	for (x = 0; x < this.maxx; x = x + spaceX) {
 		line = new paper.Path.Line(new paper.Point(x, this.miny), new paper.Point(x, this.maxy));
-		line.strokeWidth = 2.0;
+		line.strokeWidth = 0.5;
 		line.opacity = 0.2;
-		line.strokeColor = "black";
+		line.strokeColor = "#555";
 		line.strokeScaling = false;
 		container.addChild(line);
 	}
@@ -142,7 +142,7 @@ CoordinateSystem.prototype.drawCoordinatePlane = function(container, options) {
 		line = new paper.Path.Line(new paper.Point(x, this.miny), new paper.Point(x, this.maxy));
 		line.strokeWidth = 2.0;
 		line.opacity = 0.2;
-		line.strokeColor = "black";
+		line.strokeColor = "#555";
 		line.strokeScaling = false;
 		container.addChild(line);
 	}
@@ -150,18 +150,18 @@ CoordinateSystem.prototype.drawCoordinatePlane = function(container, options) {
 	var y = 0
 	for (y = 0; y < this.maxy; y = y + spaceY) {
 		line = new paper.Path.Line(new paper.Point(this.minx, y), new paper.Point(this.maxx, y));
-		line.strokeWidth = 2.0;
+		line.strokeWidth = 0.5;
 		line.opacity = 0.2;
-		line.strokeColor = "black";
+		line.strokeColor = "#555";
 		line.strokeScaling = false;
 		container.addChild(line);
 	}
 
 	for (y = 0; y > this.miny; y = y - spaceY) {
 		line = new paper.Path.Line(new paper.Point(this.minx, y), new paper.Point(this.maxx, y));
-		line.strokeWidth = 2.0;
+		line.strokeWidth = 0.5;
 		line.opacity = 0.2;
-		line.strokeColor = "black";
+		line.strokeColor = "#555";
 		line.strokeScaling = false;
 		container.addChild(line);
 	}

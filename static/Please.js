@@ -602,6 +602,11 @@
 					else {
 						saturation = color_options.saturation || random_float( 0.7, 0.99, randomiser );
 					}
+
+					if (color_options.saturation) {
+						saturation = color_options.saturation;
+					} 
+
 					value = color_options.value || random_float( 0.7, 0.99, randomiser );
 
 					color.push({

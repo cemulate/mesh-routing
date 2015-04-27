@@ -154,9 +154,9 @@ function Node(container, position, id) {
 Node.prototype.populateVisual = function() {
 	this.core = new paper.Shape.Circle({
 		center: new paper.Point(this.position.x, this.position.y),
-		radius: 15,
-		strokeColor: 'black',
-		fillColor: 'black'
+		radius: 10,
+		strokeColor: '#777',
+		fillColor: '#777'
 	});
 
 	this.redAura = new paper.Shape.Circle({
@@ -179,7 +179,8 @@ Node.prototype.populateVisual = function() {
 		center: new paper.Point(this.position.x, this.position.y),
 		radius: POINT_TO_POINT_DISTANCE/2,
 		strokeWidth: 0.0,
-		fillColor: Please.make_color({base_color: 'green', range:15, value:0.8}),
+		//fillColor: Please.make_color({base_color: 'green', range:30, value:0.8}),
+		fillColor: Please.make_color({golden:false, base_color:'white', saturation:0.2, range:360}),
 		opacity: 0.0
 	});
 
@@ -220,12 +221,12 @@ Node.prototype.showGrayAura = function() {
 	Tweens.linear({
 		target:this.grayAura,
 		prop:'opacity',
-		stop:0.8,
+		stop:0.9,
 		length:1000
 	}).next(Tweens.linear({
 		target:this.grayAura,
 		prop:'opacity',
-		start:0.8,
+		start:0.9,
 		stop:0,
 		length:1000
 	})).start();
@@ -582,7 +583,7 @@ function Simulation(real_width, real_height) {
 	this.mainLayer.matrix.initialize(this.coords.matrix);
 
 	this.cplane = new paper.Group();
-	this.coords.drawCoordinatePlane(this.cplane, {});
+	//this.coords.drawCoordinatePlane(this.cplane, {});
 
 	this.nodeGroup = new paper.Group();
 
@@ -669,14 +670,16 @@ Simulation.prototype.randomNetwork = function() {
 	var start_angle = 0.0;
 
 	function random_point(start) {
-		var angle = start_angle + random_float(-0.2*Math.PI, 0.2*Math.PI);
+		var angle = start_angle + random_float(-0.4*Math.PI, 0.4*Math.PI);
 
 		var distance = random_int(180, 220);
+
+		start_angle = angle;
 
 		return {x: start.x + distance*Math.cos(angle), y: start.y + distance*Math.sin(angle)};
 	}
 
-	for (var i = 0; i < 250; ++i) {
+	for (var i = 0; i < 300; ++i) {
 		var p = random_point(lastPoint);
 
 		while ((Math.abs(p.x) > 2000) || (Math.abs(p.y) > 1000)) {
