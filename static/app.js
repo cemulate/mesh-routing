@@ -161,17 +161,25 @@ Node.prototype.populateVisual = function() {
 
 	this.redAura = new paper.Shape.Circle({
 		center: new paper.Point(this.position.x, this.position.y),
-		radius: POINT_TO_POINT_DISTANCE,
+		radius: POINT_TO_POINT_DISTANCE/2,
 		strokeWidth: 0.0,
-		fillColor: 'red',
+		fillColor: Please.make_color({base_color: '#ff2b00', range:10, value:0.9}),
 		opacity: 0.0
 	});
 
 	this.blueAura = new paper.Shape.Circle({
 		center: new paper.Point(this.position.x, this.position.y),
-		radius: POINT_TO_POINT_DISTANCE,
+		radius: POINT_TO_POINT_DISTANCE/2,
 		strokeWidth: 0.0,
-		fillColor: 'blue',
+		fillColor: Please.make_color({base_color: '#00c4ff', range:15}),
+		opacity: 0.0
+	});
+
+	this.grayAura = new paper.Shape.Circle({
+		center: new paper.Point(this.position.x, this.position.y),
+		radius: POINT_TO_POINT_DISTANCE/2,
+		strokeWidth: 0.0,
+		fillColor: Please.make_color({base_color: 'green', range:15, value:0.8}),
 		opacity: 0.0
 	});
 
@@ -189,7 +197,38 @@ Node.prototype.redAuraVisible = function() {
 }
 
 Node.prototype.showRedAura = function () {
-	this.redAura.opacity = 1.0;
+	this.redAura.opacity = 0.0;
+
+	Tweens.linear({
+		target:this.redAura,
+		prop:'opacity',
+		stop:0.8,
+		length:750
+	}).next(Tweens.linear({
+		target:this.redAura,
+		prop:'opacity',
+		start:0.8,
+		stop:0,
+		length:1000
+	})).start();
+}
+
+Node.prototype.showGrayAura = function() {
+
+	this.grayAura.opacity = 0.0;
+
+	Tweens.linear({
+		target:this.grayAura,
+		prop:'opacity',
+		stop:0.8,
+		length:1000
+	}).next(Tweens.linear({
+		target:this.grayAura,
+		prop:'opacity',
+		start:0.8,
+		stop:0,
+		length:1000
+	})).start();
 }
 
 Node.prototype.decreaseRedAuraOpacityBy = function (x) {
@@ -202,7 +241,20 @@ Node.prototype.blueAuraVisible = function() {
 }
 
 Node.prototype.showBlueAura = function () {
-	this.blueAura.opacity = 1.0;
+	this.blueAura.opacity = 0.0;
+
+	Tweens.linear({
+		target:this.blueAura,
+		prop:'opacity',
+		stop:0.8,
+		length:500
+	}).next(Tweens.linear({
+		target:this.blueAura,
+		prop:'opacity',
+		start:0.8,
+		stop:0,
+		length:500
+	})).start();
 }
 
 Node.prototype.decreaseBlueAuraOpacityBy = function (x) {
@@ -441,6 +493,8 @@ Node.prototype.handleReceived = function () {
 
 				this.rrqProgress.resolved = true;
 
+				this.queuePacket(new Packet("Hey", this.nodeId, p.source, "PACKET_TYPE_CONTENT"));
+
 			} else {
 
 				var r_source = new RoutingTableEntry();
@@ -549,12 +603,14 @@ function Simulation(real_width, real_height) {
 
 	var self = this;
 	paper.view.onFrame = function (event) {
-		self.animation(event.time, event.delta);
+		//self.animation(event.time, event.delta);
+
+		Tweens.step(event.time, event.delta);
 	}
 
 	this.eventTimerId = setInterval(function () {
 		self.eventTimer();
-	}, 250);
+	}, 60);
 
 	this.tool = new paper.Tool();
 
@@ -567,9 +623,72 @@ function Simulation(real_width, real_height) {
 		self.clickHandler(p, b);
 	}
 
+	this.randomNetwork();
+
+	this.generateMessages();
+
 	// A = this.nodes[0];
 	// B = this.nodes[this.nodes.length - 1];
 
+}
+
+function random_int( min, max ){
+	var random = Math.random;
+	return Math.floor( random() * ( max - min + 1 )) + min;
+}
+
+function random_float( min, max ){
+	var random = Math.random;
+	return random() * ( max - min ) + min;
+}
+
+Simulation.prototype.generateMessages = function() {
+
+	function hookUp() {
+		// pick two random ids
+
+		var limit = this.nodes.length - 1;
+
+		var nodeOne = this.nodes[random_int(0, limit)];
+
+		var nodeTwo = this.nodes[random_int(0, limit)];
+
+		nodeOne.queuePacket(new Packet("Hey", nodeOne.nodeId, nodeTwo.nodeId, "PACKET_TYPE_CONTENT"));
+
+		window.setTimeout(hookUp.bind(this), 4000);
+	}
+
+	hookUp.bind(this)();
+
+}
+
+Simulation.prototype.randomNetwork = function() {
+
+	var lastPoint = {x:0, y:0};
+
+	var start_angle = 0.0;
+
+	function random_point(start) {
+		var angle = start_angle + random_float(-0.2*Math.PI, 0.2*Math.PI);
+
+		var distance = random_int(180, 220);
+
+		return {x: start.x + distance*Math.cos(angle), y: start.y + distance*Math.sin(angle)};
+	}
+
+	for (var i = 0; i < 250; ++i) {
+		var p = random_point(lastPoint);
+
+		while ((Math.abs(p.x) > 2000) || (Math.abs(p.y) > 1000)) {
+			start_angle += 0.1 * Math.PI;
+			p = random_point(lastPoint);
+		}
+
+		this.nodes.push(new Node(this.nodeGroup, p, runningNodeId));
+		runningNodeId += 1;
+
+		lastPoint = p;
+	}
 }
 
 Simulation.prototype.clickHandler = function(p, b) {
@@ -592,7 +711,9 @@ Simulation.prototype.clickHandler = function(p, b) {
 			this.send1 = this.nodes[hit];
 		} else if (this.send2 == null) {
 			this.send2 = this.nodes[hit];
-			this.send1.queuePacket(new Packet("Hey", this.send1.nodeId, this.send2.nodeId, "PACKET_TYPE_CONTENT"));
+			if (this.send1 !== null && this.send2 !== null) {
+				this.send1.queuePacket(new Packet("Hey", this.send1.nodeId, this.send2.nodeId, "PACKET_TYPE_CONTENT"));
+			}
 			this.send1 = null;
 			this.send2 = null;
 		}
@@ -676,7 +797,7 @@ Simulation.prototype.handleFrameSendGraphics = function(source, dest, frame) {
 		} else if (frame.content.type == "PACKET_TYPE_RUP") {
 			source.showBlueAura();
 		} else if (frame.content.type == "PACKET_TYPE_CONTENT") {
-			
+			source.showGrayAura();
 		}
 	}
 
@@ -685,9 +806,113 @@ Simulation.prototype.handleFrameSendGraphics = function(source, dest, frame) {
 Simulation.prototype.animation = function(time, dt) {
 
 	this.nodes.map(function (n) {
-		if (n.redAuraVisible()) n.decreaseRedAuraOpacityBy(1.0 * dt);
-		if (n.blueAuraVisible()) n.decreaseBlueAuraOpacityBy(1.0 * dt);
+		//if (n.redAuraVisible()) n.decreaseRedAuraOpacityBy(1.0 * dt);
+		//if (n.blueAuraVisible()) n.decreaseBlueAuraOpacityBy(1.0 * dt);
 	});
 
 }
+
+var Tweens = {};
+
+Tweens.list = [];
+
+Tweens.step = function(time, delta) {
+
+	for(var i = 0; i < Tweens.list.length; ++i) {
+
+		var t = Tweens.list[i];
+
+		if (t === null || t === undefined) {
+			Tweens.list.splice(i, 1);
+			--i;
+		}
+	}
+
+	var temp = [];
+
+	for(var i = 0; i < Tweens.list.length; ++i) {
+		var tween = Tweens.list[i].step(time, delta);
+
+		if (tween === null) {
+			tween = null;
+		} else {
+			tween = tween;
+		}
+
+		if (tween !== null)
+			temp.push(tween);
+	}
+
+	Tweens.list = temp;
+
+}
+
+// Linear Tween function
+var Linear = function(options) {
+
+	var options = options || {};
+
+	if (!options.target) {
+		throw new Error("Tweens must have a target");
+	}
+
+	this.target = options.target;
+
+	this.prop = options.prop || null;
+
+	this.length = options.length || 1;
+
+	this.stop = options.stop;
+
+	if (options.start)
+		this._start = options.start;
+	else {
+		this._start = this.target[this.prop];
+	}
+
+	this.slope = ( this.stop - this._start ) / this.length;
+
+	this._nextTween = null;
+
+}
+
+Linear.prototype.start = function() {
+	Tweens.list.push(this);
+
+	return this;
+}
+
+Linear.prototype.next = function(tween) {
+	this._nextTween = tween;
+
+	return this;
+}
+
+Linear.prototype.step = function linearStep(time, delta) {
+
+	var prev = this.target[this.prop];
+
+	var nextVal = prev + this.slope*delta*1000;
+
+	if (this._start <= this.stop && nextVal >= this.stop) { // we have exceeded or equaled stop
+		this.target[this.prop] = this.stop;
+
+		return this._nextTween;
+	}
+
+	if (this._start >= this.stop && nextVal <= this.stop) {
+		this.target[this.prop] = this.stop;
+		return this._nextTween;
+	}
+
+	this.target[this.prop] = nextVal;
+
+	return this;
+
+}
+
+Tweens.linear = function(options) {
+	return new Linear(options);
+};
+
 
