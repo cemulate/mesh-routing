@@ -682,7 +682,7 @@ Simulation.prototype.randomNetwork = function() {
 	for (var i = 0; i < 300; ++i) {
 		var p = random_point(lastPoint);
 
-		while ((Math.abs(p.x) > 2000) || (Math.abs(p.y) > 1000)) {
+		while ((Math.abs(p.x) > this.coords.maxx) || (Math.abs(p.y) > this.coords.maxy)) {
 			start_angle += 0.1 * Math.PI;
 			p = random_point(lastPoint);
 		}
