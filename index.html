@@ -59,12 +59,17 @@
 
 			app = new Simulation(w, h);
 
+			window.setTimeout(function(){
+				window.location.reload();
+			}, 1000*60);
+
 		});
 
 	</script>
 
 	<body>
 
+		<!--
 		<div class="github-fork-ribbon-wrapper right">
 		    <div class="github-fork-ribbon">
 		        <a href="https://github.com/cemulate/mesh-routing">Fork me on GitHub</a>
@@ -75,6 +80,7 @@
 			<h3>EagleChat Routing Protocol</h3>
 			<hr>
 		</div>
+		-->
 
 		<div class="row full-width">
 			<canvas id="paperContainer" style="width: 100%" keepalive="true">

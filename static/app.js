@@ -200,6 +200,8 @@ Node.prototype.redAuraVisible = function() {
 Node.prototype.showRedAura = function () {
 	this.redAura.opacity = 0.0;
 
+	this.redAura.fillColor = Please.make_color({base_color: '#ff2b00', range:10, value:0.9});
+
 	Tweens.linear({
 		target:this.redAura,
 		prop:'opacity',
@@ -217,6 +219,8 @@ Node.prototype.showRedAura = function () {
 Node.prototype.showGrayAura = function() {
 
 	this.grayAura.opacity = 0.0;
+
+	this.grayAura.fillColor = Please.make_color({golden:false, base_color:'white', saturation:0.2, range:360});
 
 	Tweens.linear({
 		target:this.grayAura,
@@ -243,6 +247,8 @@ Node.prototype.blueAuraVisible = function() {
 
 Node.prototype.showBlueAura = function () {
 	this.blueAura.opacity = 0.0;
+
+	this.blueAura.fillColor = Please.make_color({base_color: '#00c4ff', range:15});
 
 	Tweens.linear({
 		target:this.blueAura,
@@ -576,7 +582,7 @@ var runningNodeId = 0;
 function Simulation(real_width, real_height) {
 
 	this.coords = new CoordinateSystem(real_width, real_height);
-	this.coords.autoSetFromWidth(5000);
+	this.coords.autoSetFromWidth(7000);
 
 	this.mainLayer = new paper.Layer();
 	this.mainLayer.transformContent = false;
@@ -656,10 +662,12 @@ Simulation.prototype.generateMessages = function() {
 
 		nodeOne.queuePacket(new Packet("Hey", nodeOne.nodeId, nodeTwo.nodeId, "PACKET_TYPE_CONTENT"));
 
-		window.setTimeout(hookUp.bind(this), 4000);
+		//window.setInterval(hookUp.bind(this), 4000);
 	}
 
 	hookUp.bind(this)();
+
+	window.setInterval(hookUp.bind(this), 7000);
 
 }
 
