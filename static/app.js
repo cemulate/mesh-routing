@@ -582,7 +582,7 @@ var runningNodeId = 0;
 function Simulation(real_width, real_height) {
 
 	this.coords = new CoordinateSystem(real_width, real_height);
-	this.coords.autoSetFromWidth(7000);
+	this.coords.autoSetFromWidth(10000);
 
 	this.mainLayer = new paper.Layer();
 	this.mainLayer.transformContent = false;
@@ -617,7 +617,7 @@ function Simulation(real_width, real_height) {
 
 	this.eventTimerId = setInterval(function () {
 		self.eventTimer();
-	}, 60);
+	}, 50);
 
 	this.tool = new paper.Tool();
 
@@ -680,14 +680,14 @@ Simulation.prototype.randomNetwork = function() {
 	function random_point(start) {
 		var angle = start_angle + random_float(-0.4*Math.PI, 0.4*Math.PI);
 
-		var distance = random_int(180, 220);
+		var distance = random_int(POINT_TO_POINT_DISTANCE - 50, POINT_TO_POINT_DISTANCE - 1);
 
 		start_angle = angle;
 
 		return {x: start.x + distance*Math.cos(angle), y: start.y + distance*Math.sin(angle)};
 	}
 
-	for (var i = 0; i < 300; ++i) {
+	for (var i = 0; i < 1250; ++i) {
 		var p = random_point(lastPoint);
 
 		while ((Math.abs(p.x) > this.coords.maxx) || (Math.abs(p.y) > this.coords.maxy)) {
@@ -700,6 +700,22 @@ Simulation.prototype.randomNetwork = function() {
 
 		lastPoint = p;
 	}
+
+	this.nodeTree = new Quadtree({
+		x: this.coords.minx, y: this.coords.miny,
+		width: this.coords.maxx - this.coords.minx,
+		height: this.coords.maxy - this.coords.miny
+	}, 2, 10);
+
+	this.nodes.forEach(function (n) {
+		this.nodeTree.insert({
+			x: n.position.x - POINT_TO_POINT_DISTANCE/2,
+			y: n.position.y - POINT_TO_POINT_DISTANCE/2,
+			width: POINT_TO_POINT_DISTANCE,
+			height: POINT_TO_POINT_DISTANCE,
+			node: n
+		});
+	}, this);
 }
 
 Simulation.prototype.clickHandler = function(p, b) {
@@ -754,18 +770,39 @@ Simulation.prototype.eventTimer = function() {
 		// if its "blocking" waiting for an ACK.
 		if (n._blockedWaitingForAck) return;
 
+		if (n.DLL.frameTXQueue.length == 0) return;
+
+		/*
+		var closeNodes = nodeList.filter(function(k) {
+			var xh = Math.abs(k.position.x - n.position.x);
+
+			var yh = Math.abs(k.position.y - n.position.y);
+
+			return (xh <= POINT_TO_POINT_DISTANCE) && (yh <= POINT_TO_POINT_DISTANCE);
+		});
+		*/
+
+		var closeNodes = this.nodeTree.retrieve({
+			x: n.position.x - POINT_TO_POINT_DISTANCE/2,
+			y: n.position.y - POINT_TO_POINT_DISTANCE/2,
+			width: POINT_TO_POINT_DISTANCE,
+			height: POINT_TO_POINT_DISTANCE,
+		}).map(function(n){return n.node});
+
+
 		while (n.DLL.frameTXQueue.length > 0) {
 
 			sf = n.DLL.frameTXQueue.pop();
-			nodeList.map(function (k) {
+
+			closeNodes.map(function (k) {
 				if (n == k) return;
 
 				if (sf.broadcast || (sf.dest == k.nodeId)) {
 
 					if (n.distanceTo(k) < POINT_TO_POINT_DISTANCE) {
 
-						console.log("Channel carrying frame from " + n.nodeId + " to " + k.nodeId + " with content: ");
-						console.log(sf);
+						//console.log("Channel carrying frame from " + n.nodeId + " to " + k.nodeId + " with content: ");
+						//console.log(sf);
 						k.DLL.simulateGotFrame(JSON.parse(JSON.stringify(sf)));
 
 						sim.handleFrameSendGraphics(n, k, sf);
@@ -779,7 +816,7 @@ Simulation.prototype.eventTimer = function() {
 				}
 			});
 		}
-	});
+	}, this);
 
 	nodeList.map(function (n) {
 
